@@ -5,25 +5,14 @@ import java.util.ArrayList;
  */
 public class Processor {
     private final int number;
-    private int actualUsage;
+    private int actualUsage=0;
     private int usageQueriesAmount = 0;
     private ArrayList<Integer> usageInTime = new ArrayList<Integer>();
+    private int maxUsage;
 
-    public Processor(int number, int actualUsage) {
+    public Processor(int number, int maxUsage) {
         this.number = number;
-        this.actualUsage = actualUsage;
-    }
-
-    public double averageProcessLoad(){
-        return queriesSum()/usageInTime.size();
-    }
-
-    private int queriesSum(){
-        int usagesSummary = 0;
-        for (Integer usage : usageInTime){
-            usagesSummary+=usage;
-        }
-        return usagesSummary;
+        this.maxUsage = maxUsage;
     }
 
     public int getActualUsage() {
@@ -49,5 +38,31 @@ public class Processor {
 
     public ArrayList<Integer> getUsageInTime() {
         return usageInTime;
+    }
+
+    public Processor setUsageInTime(ArrayList<Integer> usageInTime) {
+        this.usageInTime = usageInTime;
+        return this;
+    }
+
+    public int getMaxUsage() {
+        return maxUsage;
+    }
+
+    public Processor setMaxUsage(int maxUsage) {
+        this.maxUsage = maxUsage;
+        return this;
+    }
+
+    public float averageProcessorUsage(){
+        return sumUsage()/usageInTime.size();
+    }
+
+    private int  sumUsage(){
+        int sum=0;
+        for (Integer e : usageInTime){
+            sum+=e;
+        }
+        return sum;
     }
 }

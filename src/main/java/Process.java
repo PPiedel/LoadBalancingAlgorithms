@@ -3,20 +3,28 @@
  */
 public class Process {
     private final int accessTime;
-    private final int computingPowerUsage;
+    private final int powerUsage;
     private int executingTime;
     private int waitingTime=0;
     private int movesNumber = 0;
     private int numberOfProcessor;
+    private boolean duringExecution = false;
+    private boolean done =false;
 
-    public Process(int accessTime, int executingTime, int computingPowerUsage) {
+    public Process(int accessTime, int executingTime, int powerUsage) {
         this.accessTime = accessTime;
         this.executingTime = executingTime;
-        this.computingPowerUsage = computingPowerUsage;
+        this.powerUsage = powerUsage;
     }
 
-    public int getComputingPowerUsage() {
-        return computingPowerUsage;
+    public Process(Process p){
+        accessTime=p.getAccessTime();
+        powerUsage=p.getPowerUsage();
+        executingTime=p.getExecutingTime();
+    }
+
+    public int getPowerUsage() {
+        return powerUsage;
     }
 
     public int getMovesNumber() {
@@ -55,6 +63,24 @@ public class Process {
 
     public Process setNumberOfProcessor(int numberOfProcessor) {
         this.numberOfProcessor = numberOfProcessor;
+        return this;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public Process setIsDone(boolean isDone) {
+        this.done = isDone;
+        return this;
+    }
+
+    public boolean isDuringExecution() {
+        return duringExecution;
+    }
+
+    public Process setIsDuringExecution(boolean isDuringExecution) {
+        this.duringExecution = isDuringExecution;
         return this;
     }
 }

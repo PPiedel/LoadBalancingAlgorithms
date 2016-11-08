@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
 
 /**
@@ -31,7 +30,7 @@ public class Algorithm1 {
         while (!areDone() ){
 
             /*Add all processes accessed in actual time*/
-            addProcessessWithCurrentAccessTime(queue, time);
+            addProcesses(queue, time);
 
             /*Przydziel proces do procesora zgodnie z algorytmem 1*/
             assignUnassignedProcessesToProcessor(queue, generator);
@@ -61,11 +60,11 @@ public class Algorithm1 {
                     process.setExecutingTime(process.getExecutingTime()-1);
                 }
                 else if (process.getExecutingTime()-1<=0){
+                    process.setExecutingTime(process.getExecutingTime() - 1);
                     process.setIsDone(true);
                     process.setIsDuringExecution(false);
                     system[process.getNumberOfProcessor()].setActualUsage(system[process.getNumberOfProcessor()].getActualUsage() - process.getPowerUsage());
                     system[process.getNumberOfProcessor()].getUsageInTime().add(system[process.getNumberOfProcessor()].getActualUsage());
-                    process.setExecutingTime(process.getExecutingTime() - 1);
                     statisticList.add(process);
                 }
             }
@@ -74,44 +73,47 @@ public class Algorithm1 {
 
     private void assignProcess(Random generator, Process p) {
         if (!p.isDuringExecution() && !p.isDone()){
+
             int accessProcessorNumber = generator.nextInt(system.length);
             system[accessProcessorNumber].setUsageQueriesAmount( system[accessProcessorNumber].getActualUsage()+1);
+            p.setMovesNumber(p.getMovesNumber()+1);
             boolean found = false;
-            int otherProcessorNumber=0;
-            int i=0;
-            while (i<z && !found ){
-                otherProcessorNumber = generator.nextInt(system.length);
+            for (int i=0; i<z && !found ; i++){
+                int  otherProcessorNumber = generator.nextInt(system.length);
+                system[otherProcessorNumber].setUsageQueriesAmount(system[otherProcessorNumber].getUsageQueriesAmount()+1);
 
-            /*TOD Procesor moze wylosowac sam siebie*/
+
+                /*TOD Procesor moze wylosowac sam siebie*/
                 if (system[otherProcessorNumber].getActualUsage()<system[otherProcessorNumber].getMaxUsage()){
-                    system[otherProcessorNumber].setActualUsage(system[otherProcessorNumber].getActualUsage()+p.getPowerUsage());
+                    system[otherProcessorNumber].setActualUsage(system[otherProcessorNumber].getActualUsage() + p.getPowerUsage());
                     system[otherProcessorNumber].getUsageInTime().add(system[otherProcessorNumber].getActualUsage());
-                    system[otherProcessorNumber].setUsageQueriesAmount(system[otherProcessorNumber].getUsageQueriesAmount() + 1);
                     p.setNumberOfProcessor(otherProcessorNumber);
                     p.setIsDuringExecution(true);
                     found=true;
                 }
                 else {
-                    system[otherProcessorNumber].setUsageQueriesAmount(system[otherProcessorNumber].getUsageQueriesAmount()+1);
+                    p.setMovesNumber(p.getMovesNumber()+1);
                 }
-                i++;
+
+
             }
 
-            /*Jesli nie znaleziono wlnego procka to proces wykonuje sie na "pierwotnym" procesorze*/
-            if (!found){
-                if (system[accessProcessorNumber].getActualUsage()+p.getPowerUsage()<100){
+            /*Jesli nie znaleziono wlnego procka to proces wykonuje sie na "pierwotnym" procesorze jesli moze*/
+            if (!found && system[accessProcessorNumber].getActualUsage()+p.getPowerUsage()<100){
                     system[accessProcessorNumber].setActualUsage(system[accessProcessorNumber].getActualUsage()+p.getPowerUsage());
                     system[accessProcessorNumber].getUsageInTime().add(system[accessProcessorNumber].getActualUsage());
+                    p.setMovesNumber(p.getMovesNumber()+1);
                     p.setNumberOfProcessor(accessProcessorNumber);
                     p.setIsDuringExecution(true);
-                }
-
-
+            }
+            else {
+                p.setWaitingTime(p.getWaitingTime() + 1);
+                p.setMovesNumber(p.getMovesNumber()+1);
             }
         }
     }
 
-    private void addProcessessWithCurrentAccessTime(ArrayList<Process> processQueue, int time) {
+    private void addProcesses(ArrayList<Process> processQueue, int time) {
         for (Process p : processes){
             if (p.getAccessTime()==time){
                 processQueue.add(p);
@@ -123,19 +125,50 @@ public class Algorithm1 {
         System.out.println("Algorytm nr1 : ");
         System.out.println("Ilosc zapytan poszczegolnych procesorow : ");
         for (Processor processor : system){
-            System.out.println("Procesor nr "+processor.getNumber()+" : "+processor.getUsageQueriesAmount());
+            System.out.println("Procesor nr " + processor.getNumber() + " : " + processor.getUsageQueriesAmount());
         }
 
         System.out.println("Srednie uzycie poszczegolnych procesorow : ");
         for (Processor processor : system){
-            System.out.println("Procesor nr "+processor.getNumber()+" : "+processor.averageProcessorUsage());
+            System.out.println("Procesor nr "+processor.getNumber()+" : "+processor.averageUsage());
+        }
+        System.out.println("Odchylenie średniego użycia : "+averageDeviation());
+
+        System.out.println("Srednia ilosc przemieszczen procesow : "+averageMovesNumber());
+    }
+
+    private float usageSum(){
+        float sum = 0;
+        for (Processor p : system){
+            sum+=p.averageUsage();
+        }
+        return sum;
+    }
+
+    private float averageUsage(){
+        return usageSum()/system.length;
+    }
+
+    public float averageDeviation(){
+        float deviationSum = 0;
+        float avg = averageUsage();
+        for (Processor p : system){
+            deviationSum+= (p.averageUsage()-avg)*(p.averageUsage()-avg);
         }
 
-        /*System.out.println("Ilosc przemieszczeń poszczegonych procesow : ");
-        for (int i=0; i<processes.size();i++){
-            System.out.println("Proces nr "+i+ " : "+processes.get(i).getMovesNumber());
-        }*/
+        return (float) Math.sqrt(deviationSum/system.length);
+    }
 
+    private float movesNumberSum(){
+        float sum=0;
+        for (Process p :processes){
+            sum+=p.getMovesNumber();
+        }
+        return sum;
+    }
+
+    public float averageMovesNumber(){
+        return movesNumberSum()/processes.size();
     }
 
     private boolean areDone(){

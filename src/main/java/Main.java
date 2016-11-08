@@ -16,9 +16,12 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        int processorsNumber = 7;
-        int processNumber = 50;
-        int maxProcessorUsage = 90;
+        int procNumber = 50;
+        int processNumber = 5000;
+        int maxProcessorUsage = 95;
+        int minProcUsage = 85;
+        int z= 15;
+        int m = 15;
         ArrayList<Process> processes = generateProcessSeries(processNumber);
 
 
@@ -27,10 +30,11 @@ public class Main {
         for (Process p : processes){
             al1List.add(new Process(p));
         }
-        Algorithm1 algorithm1 = new Algorithm1(al1List,3 );
-        algorithm1.createProcessors(processorsNumber,maxProcessorUsage);
+        Algorithm1 algorithm1 = new Algorithm1(al1List,z );
+        algorithm1.createProcessors(procNumber,maxProcessorUsage);
         algorithm1.generateAlgorithm();
         algorithm1.printStatistics();
+
         System.out.println("");
         System.out.println("");
         System.out.println("");
@@ -40,15 +44,21 @@ public class Main {
             al2List.add(new Process(p));
         }
         Algorithm2 algorithm2 = new Algorithm2(al2List);
-        algorithm2.createProcessors(processorsNumber,maxProcessorUsage);
+        algorithm2.createProcessors(procNumber,maxProcessorUsage);
         algorithm2.generateAlgorithm();
         algorithm2.printStatistics();
+
         System.out.println("");
         System.out.println("");
         System.out.println("");
 
-        Algorithm3 algorithm3 = new Algorithm3(processorsNumber,processes);
-        algorithm3.generateAlgorithm();
+        ArrayList<Process> al3List = new ArrayList<Process>();
+        for (Process p : processes){
+            al3List.add(new Process(p));
+        }
+        Algorithm3 algorithm3 = new Algorithm3(al3List,minProcUsage );
+        algorithm3.createProcessors(procNumber,maxProcessorUsage);
+        algorithm3.generateAlgorithm(m);
         algorithm3.printStatistics();
 
 

@@ -54,7 +54,7 @@ public class Processor {
         return this;
     }
 
-    public float averageProcessorUsage(){
+    public float averageUsage(){
         return sumUsage()/usageInTime.size();
     }
 
@@ -65,4 +65,6 @@ public class Processor {
         }
         return sum;
     }
+
+
 }

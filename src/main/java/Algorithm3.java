@@ -1,3 +1,4 @@
+import java.lang.*;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -8,9 +9,11 @@ public class Algorithm3 {
     Processor[] system ;
     ArrayList<Process> processes;
     ArrayList<Process> statisticList = new ArrayList<Process>();
+    int minimalUsage;
 
-    Algorithm3( ArrayList<Process> processes){
+    Algorithm3( ArrayList<Process> processes, int minimalUsage){
         this.processes=new ArrayList<Process>(processes);
+        this.minimalUsage=minimalUsage;
     }
 
     public void createProcessors(int processesNumber,int maxProcessorUsage){
@@ -20,7 +23,7 @@ public class Algorithm3 {
         }
     }
 
-    public void generateAlgorithm(){
+    public void generateAlgorithm(int m){
         ArrayList<Process> queue = new ArrayList<Process>();
         int time = 0;
         Random generator = new Random();
@@ -33,16 +36,45 @@ public class Algorithm3 {
             /*Przydziel proces do procesora zgodnie z algorytmem 2*/
             assignUnassignedProcessesToProcessor(queue, generator);
 
+            /*Zrownowaz obciazenie procesorow*/
+            balanceProcessorsUsage(m);
+
             /*Zasymuluj prace nad procesami w kolejce poprzez zmniejszenie ich czasu wykonywania
             * lub zaznaczenie, ?e proces jest skonczony */
-            symulateWorkingOnProcesses(queue);
-
+            symulateProcessorWork(queue);
 
             time++;
         }
 
 
 
+    }
+
+    private void balanceProcessorsUsage(int m) {
+        for (int x=0; x<system.length;x++){
+            boolean found = false;
+            if (system[x].getActualUsage()<minimalUsage){
+
+                for (int i=0; i<system.length && !found ;i++){
+                    if (system[i].getActualUsage()>system[i].getMaxUsage()){
+                        found = true;
+                        /*Zabieram mu 'm' procesow*/
+                        int n=0;
+                        for (int j=0; j<processes.size() && n<=m; j++){
+                            if (processes.get(j).getNumberOfProcessor()==i ){
+                                processes.get(j).setNumberOfProcessor(x);
+                                processes.get(j).setMovesNumber(processes.get(j).getMovesNumber()+1);
+                                system[i].setActualUsage(system[i].getActualUsage()-processes.get(j).getPowerUsage());
+                                system[i].getUsageInTime().add(system[i].getActualUsage());
+                                n++;
+                            }
+                        }
+
+                    }
+                }
+            }
+
+        }
     }
 
     private void assignUnassignedProcessesToProcessor(ArrayList<Process> queue, Random generator) {
@@ -56,54 +88,52 @@ public class Algorithm3 {
         if (!p.isDuringExecution() && !p.isDone()){
 
             int accessProcNumber = generator.nextInt(system.length);
+            system[accessProcNumber].setUsageQueriesAmount( system[accessProcNumber].getActualUsage()+1);
 
             if (system[accessProcNumber].getActualUsage() < system[accessProcNumber].getMaxUsage()){
 
                 system[accessProcNumber].setActualUsage(system[accessProcNumber].getActualUsage() + p.getPowerUsage());
                 system[accessProcNumber].getUsageInTime().add(system[accessProcNumber].getActualUsage());
-                system[accessProcNumber].setUsageQueriesAmount(system[accessProcNumber].getUsageQueriesAmount() + 1);
                 p.setNumberOfProcessor(accessProcNumber);
                 p.setIsDuringExecution(true);
 
             }
-            else {
+            else if (system[accessProcNumber].getActualUsage() >= system[accessProcNumber].getMaxUsage()){
+
                 boolean found = false;
-                int i=0;
-                while (!found && i<system.length){
+                for(int i=0; !found && i<system.length; i++){
                     int otherProcNumber=generator.nextInt(system.length);
+                    system[otherProcNumber].setUsageQueriesAmount(system[otherProcNumber].getUsageQueriesAmount() + 1);
+
+
                     if (system[otherProcNumber].getActualUsage()<system[otherProcNumber].getMaxUsage()){
-                        system[otherProcNumber].setActualUsage(system[otherProcNumber].getActualUsage()+p.getPowerUsage());
+
+                        system[otherProcNumber].setActualUsage(system[otherProcNumber].getActualUsage() + p.getPowerUsage());
                         system[otherProcNumber].getUsageInTime().add(system[otherProcNumber].getActualUsage());
-                        system[otherProcNumber].setUsageQueriesAmount(system[otherProcNumber].getUsageQueriesAmount() + 1);
+                        p.setMovesNumber(p.getMovesNumber()+1);
                         p.setNumberOfProcessor(otherProcNumber);
                         p.setIsDuringExecution(true);
                         found=true;
                     }
-                    else {
-                        system[otherProcNumber].setUsageQueriesAmount(system[otherProcNumber].getUsageQueriesAmount()+1);
-
-                    }
-                    i++;
                 }
 
             }
 
-
         }
     }
 
-    private void symulateWorkingOnProcesses(ArrayList<Process> queue) {
+    private void symulateProcessorWork(ArrayList<Process> queue) {
         for (Process process : queue){
             if (process.isDuringExecution() && !process.isDone()){
                 if (process.getExecutingTime()-1>0){
                     process.setExecutingTime(process.getExecutingTime()-1);
                 }
                 else if (process.getExecutingTime()-1<=0){
+                    process.setExecutingTime(process.getExecutingTime() - 1);
                     process.setIsDone(true);
                     process.setIsDuringExecution(false);
                     system[process.getNumberOfProcessor()].setActualUsage(system[process.getNumberOfProcessor()].getActualUsage() - process.getPowerUsage());
                     system[process.getNumberOfProcessor()].getUsageInTime().add(system[process.getNumberOfProcessor()].getActualUsage());
-                    process.setExecutingTime(process.getExecutingTime() - 1);
                     statisticList.add(process);
                 }
             }
@@ -119,7 +149,7 @@ public class Algorithm3 {
     }
 
     public void printStatistics(){
-        System.out.println("Algorytm nr2 : ");
+        System.out.println("Algorytm nr3 : ");
         System.out.println("Ilosc zapytan poszczegolnych procesorow : ");
         for (Processor processor : system){
             System.out.println("Procesor nr "+processor.getNumber()+" : "+processor.getUsageQueriesAmount());
@@ -127,14 +157,46 @@ public class Algorithm3 {
 
         System.out.println("Srednie uzycie poszczegolnych procesorow : ");
         for (Processor processor : system){
-            System.out.println("Procesor nr "+processor.getNumber()+" : "+processor.averageProcessorUsage());
+            System.out.println("Procesor nr "+processor.getNumber()+" : "+processor.averageUsage() );
+        }
+        System.out.println("Odchylenie œredniego u¿ycia : "+averageDeviation());
+
+        System.out.println("Srednia ilosc przemieszczen procesow : "+averageMovesNumber());
+
+    }
+
+    private float usageSum(){
+        float sum = 0;
+        for (Processor p : system){
+            sum+=p.averageUsage();
+        }
+        return sum;
+    }
+
+    private float averageUsage(){
+        return usageSum()/system.length;
+    }
+
+    public float averageDeviation(){
+        float deviationSum = 0;
+        float avg = averageUsage();
+        for (Processor p : system){
+            deviationSum+= (p.averageUsage()-avg)*(p.averageUsage()-avg);
         }
 
-        /*System.out.println("Ilosc przemieszczeñ poszczegonych procesow : ");
-        for (int i=0; i<processes.size();i++){
-            System.out.println("Proces nr "+i+ " : "+processes.get(i).getMovesNumber());
-        }*/
+        return (float) Math.sqrt(deviationSum/system.length);
+    }
 
+    private float movesNumberSum(){
+        float sum=0;
+        for (Process p :processes){
+            sum+=p.getMovesNumber();
+        }
+        return sum;
+    }
+
+    public float averageMovesNumber(){
+        return movesNumberSum()/processes.size();
     }
 
     private boolean areDone(){
